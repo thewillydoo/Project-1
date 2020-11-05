@@ -1,247 +1,225 @@
 import pygame
 import random
- 
+import chicken_library
+import player_library
+import bullet_library
+import star_library
+
 # Define some colors
-BLACK = (  0,   0,   0)
+BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-RED   = (255,   0,   0)
+RED   = (255, 0, 0)
 BLUE  = (0, 0, 225)
 GREEN = (0, 255, 0)
-
-# Initialize Pygame
-pygame.init()
-#Window name
-pygame.display.set_caption("Giant Chicken Shooter")
 # Set height and width of the screen
 screen_width = 800
 screen_height = 600
 screen = pygame.display.set_mode([screen_width, screen_height])
-# class Game():
 
-#Get the size of the image
+# Load image
 image = pygame.image.load("giantchicken.gif")
  
-print(image.get_size()) # you can get size
+#size
+print(image.get_size()) 
 
-
-
-
-class Chicken(pygame.sprite.Sprite):
-    """
-    This class represents the ball.
-    It derives from the "Sprite" class in Pygame.
-    """
- 
-    def __init__(self, color, width, height):
-        """ Constructor. Pass in the color of the block,
-        and its size. """
- 
-        # Call the parent class (Sprite) constructor
-        super().__init__()
-
-        #loading the image 
-        self.chicken_sprite = pygame.image.load("giantchicken.gif").convert()
-        # Create an image of the block, and fill it with a color.
-        # This could also be an image loaded from the disk.
-        self.image = pygame.Surface([width, height])
-        self.image.fill(color)
- 
-        # Fetch the rectangle object that has the dimensions of the image
-        # image.
-        # Update the position of this object by setting the values
-        # of rect.x and rect.y
-        self.rect = self.image.get_rect()
-
-    
- 
-class Player(pygame.sprite.Sprite):
-    """ The class is the player-controlled sprite. """
- 
-    # -- Methods
+class Game(object):
     def __init__(self):
-        """Constructor function"""
-        # Call the parent's constructor
-        super().__init__()
+        self.score = 0
+        self.frame_count = 0
+        self.frame_rate = 60
+        self.game_over = False
+        self.level = 1
+        
 
-        #loading the image 
-        self.player_sprite = pygame.image.load("stewie1.png").convert()
-        
- 
-        # Set height, width
-        self.image = pygame.Surface([68, 68])
-        self.image.fill(BLUE)
- 
-        # Make our top-left corner the passed-in location.
-        self.rect = self.image.get_rect()
-        self.rect.x = 400
-        self.rect.y = 500
- 
-        # -- Attributes
-        # Set speed vector
-        self.change_x = 0
-        
-    def changespeed(self, x, y):
-        """ Change the speed of the player"""
-        self.change_x += x
-        
-    def update(self):
-        """ Find a new position for the player"""
-        self.rect.x += self.change_x
-        
-        if self.rect.right > 800:
-            self.rect.right = 800
-        if self.rect.left < 0:
-            self.rect.left = 0
-        if self.rect.bottom > 600:
-            self.rect.bottom = 600
-        if self.rect.top < 0:
-            self.rect.top = 0
+        #---Sprite Lists 
+        self.bullet_list = pygame.sprite.Group()
+        self.chicken_list = pygame.sprite.Group()
+        self.all_sprites_list = pygame.sprite.Group()
 
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
- 
-        self.image = pygame.Surface([4, 10])
-        self.image.fill(BLACK)
- 
-        self.rect = self.image.get_rect()
- 
-    def update(self):
-        """ Move the bullet. """
-        self.rect.y -= 3
- 
+        # Create a player 
+        self.player = player_library.Player()
+        self.all_sprites_list.add(self.player)
+
+        # Add a bunch of chickens in a row
+        for x in range(0, 701, 300):
+            self.tempChicken = chicken_library.Chicken(x, 50)
+            self.chicken_list.add(self.tempChicken)
+            self.all_sprites_list.add(self.tempChicken)
     
+  
 
-
-
-
-#Looping the stars 
-star_list = []
-for i in range(50):
-    star_x = random.randrange(0, 800)
-    star_y = random.randrange(0, 600)
-    star_list.append([star_x, star_y])
-
-# This is a list of 'sprites.' Each block in the program is
-# added to this list. The list is managed by a class called 'Group.'
-chicken_list = pygame.sprite.Group()
-
-
-# This is a list of every sprite. 
-# All blocks and the player block as well.
-all_sprites_list = pygame.sprite.Group()
- 
-for i in range(25):
-    # This represents a block
-    chicken = Chicken(WHITE, 20, 15)
- 
-    # Set a random location for the block
-    chicken.rect.x = random.randrange(screen_width - 20)
-    chicken.rect.y = random.randrange(screen_height - 15)
- 
-    # Add the block to the list of objects
-    chicken_list.add(chicken)
-    all_sprites_list.add(chicken)
-
-
-# Create a player block
-player = Player()
-# screen.blit(player_sprite, x, y)
-all_sprites_list.add(player)
-
-
-
-
-
-# Loop until the user clicks the close button.
-done = False
-# Used to manage how fast the screen updates
-clock = pygame.time.Clock()
-score = 0
-# -------- Main Program Loop -----------
-while not done:
-    for event in pygame.event.get(): 
+    def process_events(self):
+        for event in pygame.event.get(): 
         # to close the window
-        if event.type == pygame.QUIT: 
-            done = True
-
-        # Set the speed based on the key pressed
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                player.changespeed(-4, 0)
-            elif event.key == pygame.K_RIGHT:
-                player.changespeed(4, 0)
- 
-        # Reset speed when key goes up
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_LEFT:
-                player.changespeed(4, 0)
-            elif event.key == pygame.K_RIGHT:
-                player.changespeed(-4, 0)
+            if event.type == pygame.QUIT: 
+                return True
             
-    # Setting the background
-    screen.fill(BLACK)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    self.player.changespeed(-5, 0)
+                elif event.key == pygame.K_RIGHT:
+                    self.player.changespeed(5, 0)
+                elif event.key == pygame.K_SPACE:
+                # Fire a bullet if the user clicks the mouse button
+                    bullet = bullet_library.Bullet()
+                # Set the bullet so it is where the player is
+                    bullet.rect.x =  self.player.rect.x + 30 
+                    bullet.rect.y = self.player.rect.y
+                # Add the bullet to the lists
+                    self.all_sprites_list.add(bullet)
+                    self.bullet_list.add(bullet)
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.game_over:
+                        self.__init__()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT:
+                    self.player.changespeed(5, 0)
+                elif event.key == pygame.K_RIGHT:
+                    self.player.changespeed(-5, 0)
+        
+        return False
 
-    #Process each star in the list
-    for i in range(len(star_list)):
- 
-        # Draw the snow flake
-        pygame.draw.circle(screen, WHITE, star_list[i], 3)
- 
-        # Move the snow flake down one pixel
-        star_list[i][1] += 2
- 
-        # If the snow flake has moved off the bottom of the screen
-        if star_list[i][1] > 600:
-            # Reset it just above the top
-            star_y = random.randrange(-50, -10)
-            star_list[i][1] = star_y
-            # Give it a new x position
-            star_x = random.randint(0, 800)
-            star_list[i][0] = star_x
+    def run_logic(self):
+        if not self.game_over:
+            # Move the sprites
+            self.all_sprites_list.update()
+            # Collisions
+            # Calculate mechanics for each bullet
+            for bullet in self.bullet_list:
+
+                # See if the bullet hit a chicken
+                chicken_hit_list = pygame.sprite.spritecollide(bullet, self.chicken_list, True)
+
+                # For each chicken hit, remove the bullet and add to the score
+                for block in chicken_hit_list:
+                    self.bullet_list.remove(bullet)
+                    self.all_sprites_list.remove(bullet)
+                    self.score += 1
+                    print(self.score)
+
+                # Remove the bullet if it flies up off the screen
+                if bullet.rect.y < -10:
+                    self.bullet_list.remove(bullet)
+                    self.all_sprites_list.remove(bullet)
+            # See if the player has collided with the chicken
+            player_hit_list = pygame.sprite.spritecollide(self.player, self.chicken_list, True)
+            # Check the list of collisions.
+            for block in player_hit_list:
+                self.score -= 1
+                print(self.score)                    
+
+    def level1(self):
+        self.run_logic()
+
+        if len(self.chicken_list) == 0:
+            self.level += 1
+            # Add more bunch of chickens in a row
+            for x in range(0, 701, 100):
+                self.tempChicken = chicken_library.Chicken(x, 0)
+                self.chicken_list.add(self.tempChicken)
+                self.all_sprites_list.add(self.tempChicken)
+            for x in range(0, 701, 100):
+                self.tempChicken = chicken_library.Chicken(x, -100)
+                self.chicken_list.add(self.tempChicken)
+                self.all_sprites_list.add(self.tempChicken)
+
+    def level2(self):
+        self.level1()
 
 
-    all_sprites_list.update()
-    
-    # See if the player block has collided with anything.
-    blocks_hit_list = pygame.sprite.spritecollide(player, chicken_list, True)
+    def display_frame(self, screen):
+        screen.fill(BLACK)
 
- 
-    # Check the list of collisions.
-    for block in blocks_hit_list:
-        score += 1
-        print(score)
-    
-    
+        if self.game_over:
+            # If game over is true, draw game over
+            text = font.render("Game Over", True, WHITE)
+            text_rect = text.get_rect()
+            text_x = screen.get_width() / 2 - text_rect.width / 2
+            text_y = screen.get_height() / 2 - text_rect.height / 2
+            screen.blit(text, [text_x, text_y])
 
-    
-    # Draw all the sprites
-    all_sprites_list.draw(screen)
-    # draw stewie's sprite
-    screen.blit(player.player_sprite,[player.rect.x, player.rect.y])
-    # draw giantchicken's sprite
-    screen.blit(chicken.chicken_sprite,[chicken.rect.x, chicken.rect.y])
-    # Drawing Score on the canvas
-    font = pygame.font.SysFont('Calibri', 25, True, False)
-    text = font.render("Score: " + str(score), True, WHITE)
-    screen.blit(text, [10, 570])
-    # Update the screen
-    pygame.display.flip()
- 
-    # Limit to 60 frames per second
-    clock.tick(60)
- 
-pygame.quit()
+        if not self.game_over:
+            self.all_sprites_list.draw(screen)
 
-#Things to do:
-# - Create a timer
-# - Search how to remove the png background/turn the background black
-# - How to change the width and height of the image
-# - Check the collisions of the image so that the whole image gets detected when it makes contact with a block 
-# - Remove the blocks and create an array of 'Chickens' that come from the top of the screen 
-# - Make bullets
-# - Make them be able to shoot on an event key
-# - Check the collisions of the bullets and if it hits the 'Chicken' images
-# - Create levels for the game so that it gets progressively harder
-# - Review all the code so I understand it when I talk to Veldkamp
-# - Don't act sus
+            # Draw all the sprites
+            self.all_sprites_list.draw(screen)
+            # draw stewie's sprite
+            screen.blit(self.player.image,[self.player.rect.x, self.player.rect.y])
+            # # Drawing Score on the canvas
+            font = pygame.font.SysFont('Calibri', 25, True, False)
+            text = font.render("Score: " + str(self.score), True, WHITE)
+            screen.blit(text, [10, 570])
+
+            #Draw Timer
+            # Calc total seconds
+            total_seconds = self.frame_count // self.frame_rate
+            # get min
+            minutes = total_seconds // 60
+            # get seconds
+            seconds = total_seconds % 60
+            # Use python string formatting to format in leading zeros
+            output_string = "Time: {0:02}:{1:02}".format(minutes, seconds)
+            font = pygame.font.SysFont('Calibri', 25, True, False)
+            text = font.render(output_string, True, WHITE)
+            screen.blit(text, [120, 570])
+            self.frame_count += 1    
+
+            #Draw Level
+            text = font.render("Level: "+str(self.level), True, WHITE)
+            screen.blit(text, [10, 540])
+
+        # Update the screen
+        pygame.display.flip()
+
+    def game_logic(self, screen):
+        if self.level == 1:
+            self.level1()
+            self.display_frame(screen) 
+        elif self.level == 2: 
+            self.level2()
+            self.display_frame(screen)
+            
+
+
+
+
+         
+def main():
+    #Initialize pygame 
+    pygame.init()
+    #Set up window
+    screen = pygame.display.set_mode([screen_width, screen_height])
+
+    #Window name
+    pygame.display.set_caption("Chicken Shooter")
+
+    #Create objects and set data
+    done = False
+    clock = pygame.time.Clock()
+
+    frame_rate = 60
+
+    game = Game()
+
+    # -------- Main Program Loop -----------
+    while not done:
+        
+        
+        # Process events (keystrokes, mouse clicks, etc)
+        done = game.process_events()
+ 
+        # Update object positions, check for collisions
+        game.game_logic(screen)
+        
+
+        # Limit to 60 frames per second
+        clock.tick(frame_rate)
+
+        pygame.display.flip()
+
+    #Close window and exit
+    pygame.quit()
+
+# Call the main function, start up the game
+if __name__ == "__main__":
+    main()
