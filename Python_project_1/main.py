@@ -25,6 +25,7 @@ print(image.get_size())
 class Game(object):
     def __init__(self):
         self.score = 0
+        self.lives = 1
         self.frame_count = 0
         self.frame_rate = 60
         self.game_over = False
@@ -106,12 +107,21 @@ class Game(object):
             # Check the list of collisions.
             for block in player_hit_list:
                 self.score -= 1
-                print(self.score)                    
+                self.lives -= 1
+                print("Score:", self.score)                    
 
     def level1(self):
         self.run_logic()
 
-        if len(self.chicken_list) == 0:
+        offScreen = False
+        for chicken in self.chicken_list:
+            if chicken.offScreen():
+                self.game_over = True
+
+        if self.lives <= 0:
+            self.game_over = True
+
+        elif len(self.chicken_list) == 0:
             self.level += 1
             # Add more bunch of chickens in a row
             for x in range(0, 701, 100):
@@ -122,30 +132,53 @@ class Game(object):
                 self.tempChicken = chicken_library.Chicken(x, -100)
                 self.chicken_list.add(self.tempChicken)
                 self.all_sprites_list.add(self.tempChicken)
+        
 
     def level2(self):
         self.level1()
+
+        if self.lives <= 0:
+            self.game_over = True
+
+        elif len(self.chicken_list) == 0:
+            self.level += 1
+            for x in range(0, 701, 100):
+                self.tempChicken = chicken_library.Chicken(x, 0)
+                self.chicken_list.add(self.tempChicken)
+                self.all_sprites_list.add(self.tempChicken)
+    
+    def level3(self):
+        self.level2()
+        if self.lives <= 0:
+            self.game_over = True
+    
+    def level4(self):
+        self.level3()
 
 
     def display_frame(self, screen):
         screen.fill(BLACK)
 
         if self.game_over:
-            # If game over is true, draw game over
+            # If game over is True:
+            # Drawing Game Over
+            font = pygame.font.SysFont('Calibri', 25, True, False)
             text = font.render("Game Over", True, WHITE)
             text_rect = text.get_rect()
             text_x = screen.get_width() / 2 - text_rect.width / 2
             text_y = screen.get_height() / 2 - text_rect.height / 2
             screen.blit(text, [text_x, text_y])
-
-        if not self.game_over:
+            # 
+        #if not self.gameover
+        else:
             self.all_sprites_list.draw(screen)
 
             # Draw all the sprites
             self.all_sprites_list.draw(screen)
             # draw stewie's sprite
             screen.blit(self.player.image,[self.player.rect.x, self.player.rect.y])
-            # # Drawing Score on the canvas
+
+            # Drawing Score on the canvas
             font = pygame.font.SysFont('Calibri', 25, True, False)
             text = font.render("Score: " + str(self.score), True, WHITE)
             screen.blit(text, [10, 570])
@@ -168,6 +201,10 @@ class Game(object):
             text = font.render("Level: "+str(self.level), True, WHITE)
             screen.blit(text, [10, 540])
 
+            #Draw lives 
+            text = font.render("Lives: "+str(self.lives), True, WHITE)
+            screen.blit(text, [700, 10])
+
         # Update the screen
         pygame.display.flip()
 
@@ -177,6 +214,9 @@ class Game(object):
             self.display_frame(screen) 
         elif self.level == 2: 
             self.level2()
+            self.display_frame(screen)
+        elif self.level3 == 3:
+            self.level3()
             self.display_frame(screen)
             
 

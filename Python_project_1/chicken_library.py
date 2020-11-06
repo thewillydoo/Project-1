@@ -27,3 +27,6 @@ class Chicken(pygame.sprite.Sprite):
     def update(self):
         self.rect.x += random.randint(-1, 1)
         self.rect.y += 1
+
+    def offScreen(self):
+        return self.rect.y > 600
